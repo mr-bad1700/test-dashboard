@@ -1,95 +1,83 @@
-const client = require('./bot/bot.js').client
-const express = require('express');
-var bodyParser = require('body-parser');
-const app = express();
-const db = require('quick.db');
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-let port = require('./config.js').port || 3000;
-app.set('port', port);
-const session = require('express-session');
-const passport = require('passport');
-passport.serializeUser(function(user, done) {
-  done(null, user);
+﻿/**
+  * @INFO
+  * Bot Coded by Tomato#6966 | https://github.com/Tomato6966/Discord-Js-Handler-Template
+  * @INFO
+  * Work for Milrato Development | https://milrato.eu
+  * @INFO
+  * Please mention Him / Milrato Development, when using this Code!
+  * @INFO
+*/
+//Importing all needed Commands
+const Discord = require("discord.js"); //this is the official discord.js wrapper for the Discord Api, which we use!
+const colors = require("colors"); //this Package is used, to change the colors of our Console! (optional and doesnt effect performance)
+const fs = require("fs"); //this package is for reading files and getting their inputs
+//Creating the Discord.js Client for This Bot with some default settings ;) and with partials, so you can fetch OLD messages
+const client = new Discord.Client({
+  messageCacheLifetime: 60,
+  fetchAllMembers: false,
+  messageCacheMaxSize: 10,
+  restTimeOffset: 0,
+  restWsBridgetimeout: 100,
+  disableEveryone: true,
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 });
-passport.deserializeUser(function(obj, done) {
-  done(null, obj);
+//Client variables to use everywhere
+client.commands = new Discord.Collection(); //an collection (like a digital map(database)) for all your commands
+client.aliases = new Discord.Collection(); //an collection for all your command-aliases
+client.categories = fs.readdirSync("./commands/"); //categories
+client.cooldowns = new Discord.Collection(); //an collection for cooldown commands of each user
+
+//Loading files, with the client variable like Command Handler, Event Handler, ...
+["command", "events"].forEach(handler => {
+  try{
+    require(`./handlers/${handler}`)(client);
+  }catch (e){
+    console.log(e)
+  }
 });
-const Strategy = require('passport-discord').Strategy;
-const { clientId, clientSecret, scopes, redirectUri } = require('./config.js');
-passport.use(new Strategy({
-    clientID: clientId,
-    clientSecret: clientSecret,
-    callbackURL: redirectUri,
-    scope: scopes,
-    prompt: 'consent'
-}, function(accessToken, refreshToken, profile, done) {
-    process.nextTick(function() {
-        return done(null, profile);
-    });
-}));
+["erela_js_handler", "erela_js_node_log"].forEach(handler => {
+  try{
+    require(`./handlers/lavalink/${handler}`)(client);
+  }catch (e){
+    console.log(e)
+  }
+});
+//login into the bot
+client.login(require("./botconfig/config.json").token);
+
+const Enmap = require("enmap")
+client.settings = new Enmap({name: "settings", dataDir: "./database/settings"})
+/**
+  * @INFO
+  * Bot Coded by Tomato#6966 | https://github.com/Tomato6966/Discord-Js-Handler-Template
+  * @INFO
+  * Work for Milrato Development | https://milrato.eu
+  * @INFO
+  * Please mention Him / Milrato Development, when using this Code!
+  * @INFO
+*/
 
 
-app.set('view engine', 'ejs');
-app.use(express.static('static'));
-app.use(session({
-    secret: 'meow meow im a cow',
-    resave: false,
-    saveUninitialized: false,
-    expires: 604800000,
-}));
-app.use(passport.initialize());
-app.use(passport.session());
-
-app.get('/', (req, res) => {
-    res.render('index', { pageTitle: 'Dashboard', user: req.session.user || null
-});
-});
-app.get('/authorize', passport.authenticate('discord', { scope: scopes, prompt: 'consent' }), function(req, res) {});
-app.get('/callback', passport.authenticate('discord', { failureRedirect: '/' }), function(req, res) { req.session.user = req.user; req.session.user.tag = req.user.username + '#' + req.user.discriminator; res.redirect('/') })
 
 
-app.get('/authorize/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/');
-});
-app.get('/servers', function(req, res) {
-  if (!req.session.user) return res.redirect('/authorize');
-  console.log(Object.keys(req.session.user.guilds[0]))
-  res.render('servers.ejs', {
-    servers: req.session.user.guilds.filter(x=>(x.owner && client.guilds.cache.get(x.id))),
-    user: req.session.user,
-    tag: req.session.user.tag,
-    pageTitle: 'Servers'
-  })
+process.on("unhandledRejection", (reason, promise) => {
+  console.log("Unhandled Rejection at: " + promise)
+  console.log("Reason: " + reason)
 })
-app.get('/manage/:id', function(req, res) {
-  if (!req.session.user) return res.redirect('/authorize');
-  let id = req.params['id'];
-  let guild = null;
-  req.session.user.guilds.forEach(function (x) {
-    if (id === x.id) guild = client.guilds.cache.get(x.id);
-  })
-  if (!guild) return res.redirect('/') ;
-  let channels = guild.channels.cache;
-  res.render('manage.ejs', {guild: guild, user: req.session.user, pageTitle: 'Manage Server', done: false, channels: channels, regged: [db.get(`c_${guild.id}`)] || [], bot: client})
-});
-app.post('/prefix/:id', (req, res) => {
-  if (!req.session.user) return console.log('wait what');
-  let id = req.params['id'];
-  if (!client.guilds.cache.get(id)) return res.send('oh weird');
-  let guild = client.guilds.cache.get(id);
-  let pref = req.body.prefix || (db.get(`prefix_${id}`) || '!');
-  db.set(`prefix_${id}`, pref); 
-  res.render('manage.ejs', {guild: client.guilds.cache.get(id), user: req.session.user, pageTitle: 'Manage Server', done: true, channels: guild.channels.cache, regged: db.get(`c_${guild.id}`) || [], bot: client})
-});
-
-app.post('/send/:id', (req, res) => {
-  let id = req.params['id'];
-  console.log(id)
-  console.log(Object.keys(client.channels.fetch("id")))
-  client.channels.fetch(id, true).then(channel => {console.log(Object.keys(channel));channel.send(req.body['msg-'+channel.id])}).catch(console.error)
-  res.render('manage.ejs', {guild: client.guilds.cache.get(id), user: req.session.user, pageTitle: 'Manage Server', done: true, channels: guild.channels.cache, regged: db.get(`c_${guild.id}`) || [], bot: client})
-  
+process.on("uncaughtException", (err, origin) => {
+  console.log("Caught exception: " + err)
+  console.log("Origin: " + origin)
 })
-app.listen(port, () => console.info(`Listening on port ${port}`));
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+  console.log(err);
+  console.log("Origin: " + origin)
+});
+process.on('beforeExit', (code) => {
+  console.log('Process beforeExit event with code: ', code);
+});
+process.on('exit', (code) => {
+  console.log('Process exit event with code: ', code);
+});
+process.on('multipleResolves', (type, promise, reason) => {
+  console.log(type, promise, reason);
+});
