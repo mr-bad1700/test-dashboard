@@ -1,0 +1,44 @@
+<footer>
+    <waves></waves>
+    <div class="content">
+        <h3>Resources</h3>
+        <div class="row">
+            <div class="col">
+                <div class="nav navbar-nav">
+                    <a class="nav-item nav-link"
+                        [href]="environment.docsURL">
+                        <i class="fas fa-book text-muted mr-1" aria-hidden="true"></i> Docs
+                    </a>
+                    <a class="nav-item nav-link"
+                     [href]="environment.discordInvite"
+                     routerLinkActive="active">
+                        <i class="fab fa-discord text-muted mr-1"></i> Server
+                    </a>
+                    <a class="nav-item nav-link"
+                     [href]="environment.githubURL"
+                     routerLinkActive="active">
+                        <i class="fab fa-github text-muted mr-1"></i> GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="col"></div>
+            <div class="col"></div>
+        </div>
+
+        <hr>
+    
+        <img src="/assets/img/logo.png" alt="DBots Icon">
+        <span class="cursor-pointer float-right pb-5">
+            <a [href]="statusURL">Status</a>
+            <span class="text-muted px-1">|</span>
+            <span
+                class="cursor-pointer"
+                routerLink="/docs/changelog"
+                [fragment]="anchorVersion">{{ environment.version }}</span>
+
+            <!-- NOTE: Keep this code as is. -->
+            <a [href]="environment.githubURL + '/website/tree/stable/LICENSE'"
+                class="d-block text-muted cursor-pointer">&copy; DBots - GNU AGPL</a>
+        </span>
+    </div>
+</footer>

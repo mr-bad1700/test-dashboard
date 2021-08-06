@@ -1,0 +1,27 @@
+header {
+  background-color: var(--background-secondary);
+
+  margin-top: -65px;
+  padding-top: 125px;
+}
+
+img {
+  float: left;
+
+  margin-right: 15px;
+  border-radius: 10px;
+  width: 128px;
+}
+
+#markdown {
+  word-wrap: break-word;
+  padding: 25px;
+  
+
+  margin-top: 100px;
+  min-height: 275px;
+}
+
+a {
+  color: var(--heading);
+}

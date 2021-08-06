@@ -1,0 +1,18 @@
+.content {
+  padding: 50px 75px;
+  position: relative;
+  /* height: 10vh; */
+  background-color: var(--background-secondary);
+}
+footer {  
+  position: relative !important;
+}
+
+.content {
+  transition: background-color 1s ease-in-out;
+  background-color: var(--background-secondary) !important;
+}
+
+img {
+  max-height: 48px;
+}
